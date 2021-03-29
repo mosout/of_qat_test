@@ -1,0 +1,5 @@
+.vscode
+lenet_models*
+log
+*.onnx
+*.npz
