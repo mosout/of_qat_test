@@ -3,3 +3,4 @@ lenet_models*
 log
 *.onnx
 *.npz
+**/__pycache__
