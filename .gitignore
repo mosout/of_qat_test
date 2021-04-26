@@ -1,6 +1,9 @@
 .vscode
+
 lenet_models*
 log
+output
+**/__pycache__
+
 *.onnx
 *.npz
-**/__pycache__
