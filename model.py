@@ -2,7 +2,6 @@ import numpy as np
 import oneflow as flow
 import oneflow.typing as tp
 
-
 def Lenet(data):
     initializer = flow.truncated_normal(0.1)
     conv1 = flow.layers.conv2d(
@@ -16,7 +15,7 @@ def Lenet(data):
         use_bias=False,
     )
     pool1 = flow.nn.max_pool2d(
-        conv1, ksize=2, strides=2, padding="SAME", name="pool1", data_format="NCHW"
+        conv1, ksize=2, strides=2, padding="VALID", name="pool1", data_format="NCHW"
     )
     conv2 = flow.layers.conv2d(
         pool1,
@@ -26,25 +25,63 @@ def Lenet(data):
         activation=flow.nn.relu,
         name="conv2",
         kernel_initializer=initializer,
-        use_bias=False,
+        use_bias=False
     )
     pool2 = flow.nn.max_pool2d(
-        conv2, ksize=2, strides=2, padding="SAME", name="pool2", data_format="NCHW"
+        conv2, ksize=2, strides=2, padding="VALID", name="pool2", data_format="NCHW"
     )
-    conv3 = flow.layers.conv2d(
-        pool2,
-        10,
-        1,
-        padding="SAME",
+    reshape = flow.reshape(pool2, [pool2.shape[0], -1])
+    hidden = flow.layers.dense(
+        reshape,
+        512,
         activation=flow.nn.relu,
-        name="conv3",
         kernel_initializer=initializer,
-        use_bias=False,
+        name="dense1",
+        use_bias=False
     )
-    pool3 = flow.nn.max_pool2d(
-        conv3, ksize=7, strides=7, padding="SAME", name="pool3", data_format="NCHW"
-    )
-    return flow.reshape(pool3, [pool3.shape[0], -1])
+    return flow.layers.dense(hidden, 10, kernel_initializer=initializer, name="dense2",use_bias=False)
+# def Lenet(data):
+#     initializer = flow.truncated_normal(0.1)
+#     conv1 = flow.layers.conv2d(
+#         data,
+#         32,
+#         5,
+#         padding="SAME",
+#         activation=flow.nn.relu,
+#         name="conv1",
+#         kernel_initializer=initializer,
+#         use_bias=False,
+#     )
+#     pool1 = flow.nn.max_pool2d(
+#         conv1, ksize=2, strides=2, padding="VALID", name="pool1", data_format="NCHW"
+#     )
+#     conv2 = flow.layers.conv2d(
+#         pool1,
+#         64,
+#         5,
+#         padding="SAME",
+#         activation=flow.nn.relu,
+#         name="conv2",
+#         kernel_initializer=initializer,
+#         use_bias=False,
+#     )
+#     pool2 = flow.nn.max_pool2d(
+#         conv2, ksize=2, strides=2, padding="VALID", name="pool2", data_format="NCHW"
+#     )
+#     conv3 = flow.layers.conv2d(
+#         pool2,
+#         10,
+#         1,
+#         padding="SAME",
+#         activation=flow.nn.relu,
+#         name="conv3",
+#         kernel_initializer=initializer,
+#         use_bias=False,
+#     )
+#     pool3 = flow.nn.max_pool2d(
+#         conv3, ksize=7, strides=7, padding="VALID", name="pool3", data_format="NCHW"
+#     )
+#     return flow.reshape(pool3, [pool3.shape[0], -1])
 
 
 def get_job_function(
@@ -56,6 +93,7 @@ def get_job_function(
         func_config.qat.symmetric(True)
         func_config.qat.per_channel_weight_quantization(False)
         func_config.qat.moving_min_max_stop_update_after_iters(1000)
+        func_config.qat.target_backend("tensorrt7")
     if func_type == "train":
 
         @flow.global_function(type="train", function_config=func_config)
